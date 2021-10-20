@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from metaworld.envs.mujoco.sawyer_xyz.kuka import SawyerReachPushPickPlaceKukaEnv
+from metaworld.envs.mujoco.sawyer_xyz. import SawyerReachPushPickPlaceEnv
 
 from metaworld.envs.mujoco.sawyer_xyz.v1 import (
     SawyerNutAssemblyEnv,
@@ -216,9 +216,9 @@ ALL_V2_ENVIRONMENTS = OrderedDict((
 _NUM_METAWORLD_ENVS = len(ALL_V1_ENVIRONMENTS)
 
 EASY_MODE_CLS_DICT = OrderedDict((
-    ('reach-v1', SawyerReachPushPickPlaceKukaEnv),
-    ('push-v1', SawyerReachPushPickPlaceKukaEnv),
-    ('pick-place-v1', SawyerReachPushPickPlaceKukaEnv),
+    ('reach-v1', SawyerReachPushPickPlaceEnv),
+    ('push-v1', SawyerReachPushPickPlaceEnv),
+    ('pick-place-v1', SawyerReachPushPickPlaceEnv),
     ('door-open-v1', SawyerDoorEnv),
     ('drawer-open-v1', SawyerDrawerOpenEnv),
     ('drawer-close-v1', SawyerDrawerCloseEnv),
@@ -244,9 +244,9 @@ EASY_MODE_ARGS_KWARGS['pick-place-v1']['kwargs']['task_type'] = 'pick_place'
 MEDIUM_MODE_CLS_DICT = OrderedDict((
     ('train',
         OrderedDict((
-            ('reach-v1', SawyerReachPushPickPlaceKukaEnv),
-            ('push-v1', SawyerReachPushPickPlaceKukaEnv),
-            ('pick-place-v1', SawyerReachPushPickPlaceKukaEnv),
+            ('reach-v1', SawyerReachPushPickPlaceEnv),
+            ('push-v1', SawyerReachPushPickPlaceEnv),
+            ('pick-place-v1', SawyerReachPushPickPlaceEnv),
             ('door-open-v1', SawyerDoorEnv),
             ('drawer-close-v1', SawyerDrawerCloseEnv),
             ('button-press-topdown-v1', SawyerButtonPressTopdownEnv),
@@ -291,9 +291,9 @@ MEDIUM_MODE_ARGS_KWARGS = dict(
 HARD_MODE_CLS_DICT = OrderedDict((
     ('train',
         OrderedDict((
-            ('reach-v1', SawyerReachPushPickPlaceKukaEnv),
-            ('push-v1', SawyerReachPushPickPlaceKukaEnv),
-            ('pick-place-v1', SawyerReachPushPickPlaceKukaEnv),
+            ('reach-v1', SawyerReachPushPickPlaceEnv),
+            ('push-v1', SawyerReachPushPickPlaceEnv),
+            ('pick-place-v1', SawyerReachPushPickPlaceEnv),
             ('door-open-v1', SawyerDoorEnv),
             ('drawer-open-v1', SawyerDrawerOpenEnv),
             ('drawer-close-v1', SawyerDrawerCloseEnv),
