@@ -25,6 +25,7 @@ class LanguageMetaWorldT(GeneralizedMetaWorld):
         self.generate_oppo_sample = False
         self.timeout = False
         self.reverse_index = 0
+        self.max_reward = 0
         self.reverse_action = []
         vocab_path = os.path.join(os.path.dirname(__file__), 'meta_world_vocab.pkl')
         assert os.path.exists(vocab_path), 'please run save_used_word_embeddings.py before using LanguageMetaWorld'
@@ -60,6 +61,7 @@ class LanguageMetaWorldT(GeneralizedMetaWorld):
         self.valid_sample_one_trial.clear()
         self.generate_oppo_sample = False
         self.reverse_index = 0
+        self.max_reward = 0
         self.timeout = False
 
     def set_sim2real(self, sbool):
@@ -98,6 +100,7 @@ class LanguageMetaWorldT(GeneralizedMetaWorld):
             if self.generate_oppo_sample is False:
                 for i in range(self.action_repeat):  # action repeat := 2
                     self.observation, reward, done, info = self.env.step(action)
+                    self.max_reward = max(self.max_reward, reward)
                     self.step_in_trial += 1
                     reward_sum += reward
                     self.trial_success = self.trial_success or info['success']
@@ -106,6 +109,10 @@ class LanguageMetaWorldT(GeneralizedMetaWorld):
                 if self.reverse_index >= 0:
                     self.observation, reward, done, info = self.env.step(self.reverse_action[self.reverse_index])
                     # compare the reward of the current opposite sample with that of the first sample in the original sequence
+                    current_reward = self.max_reward - reward
+                    reward_sum += current_reward
+                    # compare the current reward with the first reward to determine the terminal condition
+                    # delta_r < threshold represents the object has been moved to its initial position, success
                     delta_r = abs(reward - self.valid_sample_one_trial[0][0])*1.0 / self.valid_sample_one_trial[0][0]
                     if delta_r < 0.05:
                         self.trial_success = True
@@ -258,7 +265,7 @@ env_instructions = {
 if __name__ == '__main__':
     # env = LanguageMetaWorld(benchmark='reach-v1', action_repeat=1, demonstration_action_repeat=1,
     # max_trials_per_episode=1, sample_num_classes=1, visual_observations=False)
-    env = LanguageMetaWorld(benchmark='ml10', action_repeat=1, demonstration_action_repeat=5,
+    env = LanguageMetaWorldT(benchmark='ml10', action_repeat=1, demonstration_action_repeat=5,
                             max_trials_per_episode=3, sample_num_classes=5, mode='meta_testing')
     while True:
         obs = env.reset()  # Reset environment
