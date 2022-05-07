@@ -116,7 +116,7 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 reward_sum += reward
                 self.trial_success = self.trial_success or info['success']
                 print("trial_success", self.trial_success)
-                self.valid_sample_one_trial.append((self.observation, reward, i_action))
+            self.valid_sample_one_trial.append((self.observation, reward, i_action))
 
             if self.trial_timeout():
                 self.success_in_episode += self.trial_success
@@ -157,12 +157,12 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             self.reverse_action[:, -1] = np.negative(self.reverse_action[:, -1])
             # print(this_sample[::-1])
             # print(action)
-            i = 0
-            print(self.env.get_endeff_pos())
-            while i < sample_num:
-                for t in range(self.action_repeat):  # repeat action
-                    self.env.step(action[i])
-                i += 1
+            cnt = 0
+            while cnt < sample_num:
+                for i in range(self.action_repeat):  # repeat action
+                    self.env.step(action[cnt])
+                cnt += 1
+                time.sleep(0.01)
                 self.env.render(mode='human')
             self.recover_scene = True
             print("recovering scene done!")
@@ -190,6 +190,7 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
 
         done = self.vmdp_num >= self.valid_sample_num
         if done:
+            print("vmdp done reset")
             self._virtual_mdp = False
 
         return full_observation, reward_sum, done, info
