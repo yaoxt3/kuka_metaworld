@@ -46,16 +46,8 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 'demonstration_phase': gym.spaces.Discrete(2),
             })
 
-    # def reset(self, instruction=None):
-    #     self._reset_env(new_episode=True, instruction=instruction)
-    #     self.trial_in_episode = 0
-    #     self.demonstration_phase = True
-    #     self.num_successful_trials = 0
-    #     self.demonstration_successes = 0
-    #     return self.get_full_observation(self.observation)
 
     def reset(self):
-        print("reset language")
         if self._virtual_mdp:
             self.virtual_mdp = True
         else:
@@ -80,25 +72,7 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         self.current_action_cnt = 0
 
 
-    def set_sim2real(self, bool):
-        self.sim2real = bool
-        self.env.set_sim2real(bool)
-
-    # def kuka_reset_env(self):
-    #     obs = self.env.kuka_reset_env()
-    #     return obs
-
-    def kuka_set_pos_goal(self, goal):
-        self.env.kuka_set_pos_goal(goal)
-
-    def kuka_set_env(self):
-        self.env.kuka_set_env()
-
-    def kuka_set_initial_pos(self, initial_pos):
-        self.env.kuka_set_initial_pos(initial_pos)
-
     def MDP_step(self, i_action):
-        print(f'MDP_step')
         reward_sum = 0
         if self.demonstration_phase:
             instruction, instruction_finished = self.get_instruction_word()
@@ -115,7 +89,6 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 self.step_in_trial += 1
                 reward_sum += reward
                 self.trial_success = self.trial_success or info['success']
-                print("trial_success", self.trial_success)
             self.valid_sample_one_trial.append((self.observation, reward, i_action))
 
             if self.trial_timeout():
@@ -134,20 +107,22 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
 
         done = self.trial_in_episode >= self.max_trials_per_episode
         if done and self.success_in_episode > 0:
-            print("+++++++++++virtual_mdp+++++++++++")
             self._virtual_mdp = True
-            # print(np.array(self.valid_samples[0])[:, -1])
-            # print(self.valid_samples[0])
-        # done = self.trial_success
+
         info = self.append_env_info(info)
         return full_observation, reward_sum, done, info
 
     def vMDP_step(self, t_action):
-        print(f'vMDP_step')
         if not self.recover_scene:
-            print("recovering scene")
             self.instruction = self.instruction_one_trial[self.vmdp_num]  # have to generate the corresponding opposite instruction
+            index_o = self.instruction.find("open")
+            index_c = self.instruction.find("close")
+            if index_o >= 0:
+                self.instruction = self.instruction.replace("open", "close")
+            elif index_c >= 0:
+                self.instruction = self.instruction.replace("close", "open")
             self.instruction = self.instruction.split()
+
             sample_num = np.shape(self.valid_samples[self.vmdp_num])[0]
             this_sample = np.array(self.valid_samples[self.vmdp_num])
             action = this_sample[:, -1].tolist()
@@ -155,17 +130,12 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             self.reverse_action = this_sample[:, -1].tolist()
             self.reverse_action = np.negative(self.reverse_action)  # negative
             self.reverse_action[:, -1] = np.negative(self.reverse_action[:, -1])
-            # print(this_sample[::-1])
-            # print(action)
             cnt = 0
             while cnt < sample_num:
                 for i in range(self.action_repeat):  # repeat action
                     self.env.step(action[cnt])
                 cnt += 1
-                time.sleep(0.01)
-                self.env.render(mode='human')
             self.recover_scene = True
-            print("recovering scene done!")
 
         reward_sum = 0
         if self.demonstration_phase:
@@ -179,7 +149,6 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 self.observation, reward, done, info = self.env.step(self.reverse_action[self.current_action_cnt])
                 self.step_in_trial += 1
                 reward_sum += reward  # has to be modified with r_reward
-                # self.trial_success = self.trial_success or info['success']
 
             self.current_action_cnt += 1
             if self.current_action_cnt >= np.shape(self.valid_samples[self.vmdp_num])[0]:
@@ -190,13 +159,11 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
 
         done = self.vmdp_num >= self.valid_sample_num
         if done:
-            print("vmdp done reset")
             self._virtual_mdp = False
 
         return full_observation, reward_sum, done, info
 
     def step(self, action):
-        print(f'virtual mdp: {self.virtual_mdp}')
         if self._virtual_mdp:
             return self.vMDP_step(action)
         else:
@@ -227,8 +194,6 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             state = np.concatenate((state, np.zeros(self.EMBED_DIM - state.shape[0])))
         elif instruction_word is not None:
             state = np.array(instruction_word)
-
-        print('get full observation: ', env_obs)
 
         if self.visual_observations:
             self.env.viewer.render(64, 64, None)
