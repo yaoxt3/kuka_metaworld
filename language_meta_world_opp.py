@@ -1,6 +1,7 @@
 from learning_to_be_taught.environments.meta_world.generalized_meta_world import GeneralizedMetaWorld
 from learning_to_be_taught.environments.meta_world.opposite_language_instructions import OpposedLanguageInstruction
 from torchtext.vocab import GloVe
+from rlpyt.utils.logging import logger
 import gym
 import numpy as np
 import pickle
@@ -18,18 +19,29 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         self.EMBED_DIM = 50
         self.sim2real = False
         self.valid_samples = []
+        self.valid_samples_obs = []
+        self.valid_samples_act = []
+        self.valid_samples_rew = []
+        self.max_reward = []
+        self.opposite_actions = []
         self.instruction_one_trial = []
-        self.valid_sample_one_trial = []
+        self.valid_sample_one_trial_obs = []
+        self.valid_sample_one_trial_act = []
+        self.valid_sample_one_trial_rew = []
+        self.max_reward_one_trial = 0
         self.full_instruction = ''
         self.reverse_index = 0
         self.reverse_action = []
-        self._virtual_mdp = False
+        self.lang_virtual_mdp = False
         self.success_in_episode = False
         self.recover_scene = False
+        self.vmdp_step_reward = 0
+        self.vmdp_step_action = []
         self.vmdp_num = 0
         self.valid_sample_num = 0
         self.current_action_cnt = 0
-        vocab_path = os.path.join(os.path.dirname(__file__), 'meta_world_vocab.pkl')
+        self.file_count = 0
+        vocab_path = os.path.join(os.path.dirname(__file__), 'meta_world_vocab2.pkl')
         assert os.path.exists(vocab_path), 'please run save_used_word_embeddings.py before using LanguageMetaWorld'
         self.word_mapping = pickle.load(open(vocab_path, 'rb'))
         if self.visual_observations:
@@ -37,7 +49,6 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 'camera_image': gym.spaces.Box(low=-1, high=1, shape=(3, 64, 64)),
                 'state': gym.spaces.Box(low=-10, high=10, shape=(self.EMBED_DIM,)),
             })
-
             # self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(3, 64, 64))
         else:
             self.observation_space = gym.spaces.Dict({
@@ -46,18 +57,22 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 'demonstration_phase': gym.spaces.Discrete(2),
             })
 
-
     def reset(self):
-        if self._virtual_mdp:
+        if self.lang_virtual_mdp:
             self.virtual_mdp = True
         else:
             self.virtual_mdp = False
             self.valid_sample_num = 0
-            self.valid_samples.clear()
+            self.valid_samples_obs.clear()
+            self.valid_samples_act.clear()
+            self.valid_samples_rew.clear()
+            self.opposite_actions.clear()
             self.reverse_action.clear()
             self.instruction_one_trial.clear()
+            self.max_reward.clear()
         self.vmdp_num = 0
         self.success_in_episode = 0
+        self.file_count = 0
         return super().reset()
 
     def _reset_env(self, *args, instruction=None, **kwargs):
@@ -66,11 +81,13 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         self.full_instruction = self.instruction
         self.instruction = self.instruction.split()
         self.instruction_index = 0
-        self.valid_sample_one_trial = []
+        self.valid_sample_one_trial_act = []
+        self.valid_sample_one_trial_obs = []
+        self.valid_sample_one_trial_rew = []
         self.reverse_action = []
         self.recover_scene = False
         self.current_action_cnt = 0
-
+        self.max_reward_one_trial = 0
 
     def MDP_step(self, i_action):
         reward_sum = 0
@@ -82,19 +99,24 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             # oppo_inst = OpposedLanguageInstruction(''.join(self.full_instruction))
             # print(f'demonstration_phase: word {self.instruction_index}.')
         else:
-
             self.env._partially_observable = True
             for i in range(self.action_repeat):  # action repeat := 2
                 self.observation, reward, done, info = self.env.step(i_action)
                 self.step_in_trial += 1
                 reward_sum += reward
+                self.max_reward_one_trial = max(self.max_reward_one_trial, reward)
                 self.trial_success = self.trial_success or info['success']
-            self.valid_sample_one_trial.append((self.observation, reward, i_action))
+            self.valid_sample_one_trial_obs.append(self.observation)
+            self.valid_sample_one_trial_act.append(i_action)
+            self.valid_sample_one_trial_rew.append(reward)
 
             if self.trial_timeout():
                 self.success_in_episode += self.trial_success
                 if self.trial_success:  # save the valid sample
-                    self.valid_samples.append(self.valid_sample_one_trial)
+                    self.valid_samples_obs.append(self.valid_sample_one_trial_obs)
+                    self.valid_samples_act.append(self.valid_sample_one_trial_act)
+                    self.valid_samples_rew.append(self.valid_sample_one_trial_rew)
+                    self.max_reward.append(self.max_reward_one_trial)
                     self.instruction_one_trial.append(self.full_instruction)
                     self.valid_sample_num += 1
 
@@ -107,13 +129,22 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
 
         done = self.trial_in_episode >= self.max_trials_per_episode
         if done and self.success_in_episode > 0:
-            self._virtual_mdp = True
+            self.lang_virtual_mdp = True
+            logger.log(f"done:{done}, success_in_episode:{self.success_in_episode}")
+            logger.log(f"valid_sample_num:{self.valid_sample_num}, valid_samples_act_shape:{np.shape(self.valid_samples_act)}")
 
         info = self.append_env_info(info)
         return full_observation, reward_sum, done, info
 
     def vMDP_step(self, t_action):
         if not self.recover_scene:
+            self.file_count = 0
+            filename_act_original = '/home/yxt/Research/RL/learning_to_be_taught/reverse/' + str("a") + '-ori-' + str(
+                self.file_count) + '.txt'
+            filename_act_reverse = '/home/yxt/Research/RL/learning_to_be_taught/reverse/' + str("a") + '-rev-' + str(
+                self.file_count) + '.txt'
+            file_ori = open(filename_act_original, 'w+')
+            file_rev = open(filename_act_reverse, 'w+')
             self.instruction = self.instruction_one_trial[self.vmdp_num]  # have to generate the corresponding opposite instruction
             index_o = self.instruction.find("open")
             index_c = self.instruction.find("close")
@@ -122,21 +153,26 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             elif index_c >= 0:
                 self.instruction = self.instruction.replace("close", "open")
             self.instruction = self.instruction.split()
-
-            sample_num = np.shape(self.valid_samples[self.vmdp_num])[0]
-            this_sample = np.array(self.valid_samples[self.vmdp_num])
-            action = this_sample[:, -1].tolist()
-            this_sample = this_sample[::-1]
-            self.reverse_action = this_sample[:, -1].tolist()
+            sample_num = np.shape(self.valid_samples_act[self.vmdp_num])[0]
+            action = self.valid_samples_act[self.vmdp_num]
+            self.reverse_action = self.valid_samples_act[self.vmdp_num][::-1]
             self.reverse_action = np.negative(self.reverse_action)  # negative
             self.reverse_action[:, -1] = np.negative(self.reverse_action[:, -1])
+            self.opposite_actions.append(self.reverse_action)
             cnt = 0
+
+            np.savetxt(filename_act_original, action, fmt="%.8f", newline="\n")
+            np.savetxt(filename_act_reverse, self.reverse_action, fmt="%.8f", newline="\n")
+
             while cnt < sample_num:
                 for i in range(self.action_repeat):  # repeat action
                     self.env.step(action[cnt])
+                self.env.render(mode='human')
+                time.sleep(0.015)
                 cnt += 1
             self.recover_scene = True
-
+            self.file_count += 1
+            # print(f'reverse action {np.shape(self.reverse_action)}')
         reward_sum = 0
         if self.demonstration_phase:
             instruction, instruction_finished = self.get_instruction_word()
@@ -145,13 +181,17 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             info = {}
         else:
             self.env._partially_observable = True
+            reward = 0
             for i in range(self.action_repeat):  # action repeat := 2
                 self.observation, reward, done, info = self.env.step(self.reverse_action[self.current_action_cnt])
                 self.step_in_trial += 1
-                reward_sum += reward  # has to be modified with r_reward
+                self.vmdp_step_reward = self.max_reward[self.vmdp_num] - reward  # reward for each vmdp step
+                reward_sum += self.vmdp_step_reward
+            self.vmdp_step_action = self.reverse_action[self.current_action_cnt]
+            # print(f"vmdp step:{self.current_action_cnt} vreward:{self.vmdp_step_reward} reward:{reward}")
 
             self.current_action_cnt += 1
-            if self.current_action_cnt >= np.shape(self.valid_samples[self.vmdp_num])[0]:
+            if self.current_action_cnt >= np.shape(self.valid_samples_act[self.vmdp_num])[0]:
                 self.vmdp_num += 1
                 self._reset_env()
 
@@ -159,12 +199,12 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
 
         done = self.vmdp_num >= self.valid_sample_num
         if done:
-            self._virtual_mdp = False
+            self.lang_virtual_mdp = False
 
         return full_observation, reward_sum, done, info
 
     def step(self, action):
-        if self._virtual_mdp:
+        if self.lang_virtual_mdp:
             return self.vMDP_step(action)
         else:
             return self.MDP_step(action)
@@ -222,14 +262,14 @@ env_instructions = {
     "reach-v1": ["reach to goal_pos", 'reach goal_pos'],
     'push-v1': ["push goal_pos", 'push to goal_pos', 'push object to goal_pos', 'push block to goal_pos'],
     'pick-place-v1': ["pick and place at goal_pos", 'pick object and place at goal_pos'],
-    'door-open-v1': ["pull goal_pos", 'open door', 'pull to goal_pos'],
-    'drawer-open-v1': ["pull goal_pos", 'pull to goal_pos', 'pull back to goal_pos'],
-    'drawer-close-v1': ["push goal_pos", 'push to goal_pos', 'push forward to goal_pos'],
+    'door-open-v1': ['open door'],
+    'drawer-open-v1': ["open drawer"],
+    'drawer-close-v1': ["close drawer"],
     'button-press-topdown-v1': ["push object down to goal_pos", 'press button', 'press down', 'press button down'],
     'peg-insert-side-v1': [""],
     'window-open-v1': ['push right to goal_pos', 'push object right', 'slide object left', 'open window'],
     'window-close-v1': ['push left to goal_pos', 'push object left', 'slide object right', 'close window'],
-    'door-close-v1': ['push to goal_pos', 'close door', 'push from left'],
+    'door-close-v1': ['close door'],
     'reach-wall-v1': ['reach over obstacle to goal_pos', 'reach goal_pos', 'reach to goal_pos'],
     'pick-place-wall-v1': ['pick object and place at goal_pos', 'pick and place at goal_pos'],
     'push-wall-v1': ['push object around obstacle to goal_pos', 'push to goal_pos', 'push object to goal_pos'],
