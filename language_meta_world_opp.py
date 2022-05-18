@@ -29,18 +29,20 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         self.valid_sample_one_trial_act = []
         self.valid_sample_one_trial_rew = []
         self.max_reward_one_trial = 0
+        self.vmdp_instruction = ''
         self.full_instruction = ''
         self.reverse_index = 0
         self.reverse_action = []
         self.lang_virtual_mdp = False
         self.success_in_episode = False
         self.recover_scene = False
+        self.reverse_step_start = False
+        self.evaluating = False
         self.vmdp_step_reward = 0
         self.vmdp_step_action = []
         self.vmdp_num = 0
         self.valid_sample_num = 0
         self.current_action_cnt = 0
-        self.file_count = 0
         vocab_path = os.path.join(os.path.dirname(__file__), 'meta_world_vocab2.pkl')
         assert os.path.exists(vocab_path), 'please run save_used_word_embeddings.py before using LanguageMetaWorld'
         self.word_mapping = pickle.load(open(vocab_path, 'rb'))
@@ -70,9 +72,11 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             self.reverse_action.clear()
             self.instruction_one_trial.clear()
             self.max_reward.clear()
+        
+        self.vmdp_instruction = ''
+        self.reverse_step_start = False    
         self.vmdp_num = 0
         self.success_in_episode = 0
-        self.file_count = 0
         return super().reset()
 
     def _reset_env(self, *args, instruction=None, **kwargs):
@@ -86,6 +90,7 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         self.valid_sample_one_trial_rew = []
         self.reverse_action = []
         self.recover_scene = False
+        self.evaluating = False
         self.current_action_cnt = 0
         self.max_reward_one_trial = 0
 
@@ -129,22 +134,24 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
 
         done = self.trial_in_episode >= self.max_trials_per_episode
         if done and self.success_in_episode > 0:
-            self.lang_virtual_mdp = True
-            logger.log(f"done:{done}, success_in_episode:{self.success_in_episode}")
-            logger.log(f"valid_sample_num:{self.valid_sample_num}, valid_samples_act_shape:{np.shape(self.valid_samples_act)}")
+            if self.evaluating:
+                self.lang_virtual_mdp = False
+                logger.log("xxxxxxxxxxxxx evaluating xxxxxxxxxxxxx")
+            else:
+                self.lang_virtual_mdp = True
+                # logger.log("xxxxxxxxxxxxx no evaluating xxxxxxxxxxxxx")
+            # logger.log(f"done:{done}, success_in_episode:{self.success_in_episode}")
+            # logger.log(f"valid_sample_num:{self.valid_sample_num}, valid_samples_act_shape:{np.shape(self.valid_samples_act)}")
 
         info = self.append_env_info(info)
         return full_observation, reward_sum, done, info
 
     def vMDP_step(self, t_action):
+        # move the object to the position of the terminal state, and then the agent performs /
+        # reverse actions to acquire opposite trajectory (original task: open door, opposite /
+        # task: close door)
         if not self.recover_scene:
-            self.file_count = 0
-            filename_act_original = '/home/yxt/Research/RL/learning_to_be_taught/reverse/' + str("a") + '-ori-' + str(
-                self.file_count) + '.txt'
-            filename_act_reverse = '/home/yxt/Research/RL/learning_to_be_taught/reverse/' + str("a") + '-rev-' + str(
-                self.file_count) + '.txt'
-            file_ori = open(filename_act_original, 'w+')
-            file_rev = open(filename_act_reverse, 'w+')
+            # generate antonyms of the Verb : open the door -> close the door
             self.instruction = self.instruction_one_trial[self.vmdp_num]  # have to generate the corresponding opposite instruction
             index_o = self.instruction.find("open")
             index_c = self.instruction.find("close")
@@ -152,26 +159,26 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
                 self.instruction = self.instruction.replace("open", "close")
             elif index_c >= 0:
                 self.instruction = self.instruction.replace("close", "open")
+            if self.instruction.find("drawer") >= 0: # drawer open
+                self.env_id = 2
+            if self.instruction.find("door") >= 0: # door close
+                self.env_id = 3 
+            
+            self.vmdp_instruction = self.instruction
             self.instruction = self.instruction.split()
+            
             sample_num = np.shape(self.valid_samples_act[self.vmdp_num])[0]
             action = self.valid_samples_act[self.vmdp_num]
             self.reverse_action = self.valid_samples_act[self.vmdp_num][::-1]
             self.reverse_action = np.negative(self.reverse_action)  # negative
-            self.reverse_action[:, -1] = np.negative(self.reverse_action[:, -1])
+            self.reverse_action[:, 2:4] = np.negative(self.reverse_action[:, 2:4]) #[-dx, -dy, dz, f]
             self.opposite_actions.append(self.reverse_action)
             cnt = 0
-
-            np.savetxt(filename_act_original, action, fmt="%.8f", newline="\n")
-            np.savetxt(filename_act_reverse, self.reverse_action, fmt="%.8f", newline="\n")
-
             while cnt < sample_num:
                 for i in range(self.action_repeat):  # repeat action
                     self.env.step(action[cnt])
-                self.env.render(mode='human')
-                time.sleep(0.015)
                 cnt += 1
             self.recover_scene = True
-            self.file_count += 1
             # print(f'reverse action {np.shape(self.reverse_action)}')
         reward_sum = 0
         if self.demonstration_phase:
@@ -180,6 +187,7 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
             self.demonstration_phase = not instruction_finished
             info = {}
         else:
+            self.reverse_step_start = True
             self.env._partially_observable = True
             reward = 0
             for i in range(self.action_repeat):  # action repeat := 2
@@ -200,9 +208,16 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         done = self.vmdp_num >= self.valid_sample_num
         if done:
             self.lang_virtual_mdp = False
+            # logger.log(f"vmdp done:{done}")
 
         return full_observation, reward_sum, done, info
 
+    # the agent tries to solve the original task in a MDP, if these has at least one trial /
+    # that the agent successfully solve the original task, namely a vaild sample, save the /
+    # information of the trajectory. When this MDP ends, return done (don't randomly sample /
+    # a new task from meta_training set), followed by a vMDP where we create reverse actions/
+    # and let the agent perform the reverse actions to try to solve the opposite task. Actually,
+    # this process is a data augmentation process. 
     def step(self, action):
         if self.lang_virtual_mdp:
             return self.vMDP_step(action)
@@ -216,6 +231,7 @@ class LanguageMetaWorldOpp(GeneralizedMetaWorld):
         # if self.instruction_index == 0:
         #     self.instruction = random.sample(env_instructions[self.env_name], 1)[0].split()
         #     print(f'sampled new instruction {self.instruction}')
+ 
         word = self.instruction[self.instruction_index]
         if word == 'goal_pos':
             embedding = np.concatenate((self.env._get_pos_goal(), np.zeros(self.EMBED_DIM - 3)))

@@ -31,11 +31,16 @@ class CpuResetCollector(DecorrelatingStartCollector):
         agent_buf, env_buf = self.samples_np.agent, self.samples_np.env
         completed_infos = list()
         observation, action, reward = agent_inputs
-        
+        logger.log("------------collect_batch---------------")
         obs_pyt, act_pyt, rew_pyt = torchify_buffer(agent_inputs)
-        agent_buf.prev_action[0] = action  # Leading prev_action. (64, 14, 4)
+        agent_buf.prev_action[0] = action  # Leading prev_action. shape(64, 14, 4)
         env_buf.prev_reward[0] = reward # (64, 14)
         self.agent.sample_mode(itr)
+        pre_action = action
+        pre_reward = reward
+        pre_vmdp = True
+        
+        # logger.log("------------no evaluating---------------")
         for t in range(self.batch_T):
             env_buf.observation[t] = observation
             # Agent inputs and outputs are torch tensors.
@@ -43,16 +48,23 @@ class CpuResetCollector(DecorrelatingStartCollector):
             action = numpify_buffer(act_pyt)
             
             vmdp = False
-            for b, env in enumerate(self.envs):
+            cnt = 0;
+            for b, env in enumerate(self.envs): # random sample env
+                # logger.log(f"******** itr:{itr}, b:{b}, env:{env} ********")
+                env.evaluating = False
+                
                 vmdp = env.lang_virtual_mdp
                 # Environment inputs and outputs are numpy arrays.
                 o, r, d, env_info = env.step(action[b])
                 if vmdp:
-                    # logger.log(f"env_name:{env.env_name} vmdp: {vmdp} action:{env.vmdp_step_action}.")
                     if not env.demonstration_phase and env.reverse_step_start:
                         # logger.log(f"demonstration_phase:{env.demonstration_phase} vmdp_step_action:{env.vmdp_step_action}")
                         # logger.log(f"action shape:{np.shape(action[b])} {type(action[b])} vmdp_action_shape:{np.shape(env.vmdp_step_action)} {type(env.vmdp_step_action)}")
                         action[b] = env.vmdp_step_action
+                        # logger.log(f"env_name:{env.env_name}, id:{env.env_id}")
+                        if pre_vmdp:
+                            pre_action[b] = env.vmdp_step_action
+                            pre_reward[b] = r
 
                 traj_infos[b].step(observation[b], action[b], r, d, agent_info[b], env_info)
                 if getattr(env_info, "traj_done", d):
@@ -61,8 +73,9 @@ class CpuResetCollector(DecorrelatingStartCollector):
                     o = env.reset()
                 if d:
                     self.agent.reset_one(idx=b)
-                    if vmdp:
-                        logger.log(f"env_name:{env.env_name} vmdp done")
+                    # if vmdp:
+                    #     logger.log(f" vmdp done env_name:{env.env_name} ins:{env.instruction}")
+                        
                 observation[b] = o
                 reward[b] = r
                 env_buf.done[t, b] = d
@@ -74,6 +87,11 @@ class CpuResetCollector(DecorrelatingStartCollector):
                     
             if agent_info:
                 agent_buf.agent_info[t] = agent_info
+                
+            if pre_vmdp:
+                agent_buf.prev_action[0] = pre_action
+                env_buf.prev_reward[0] = pre_reward
+                pre_vmdp = False
             
         if "bootstrap_value" in agent_buf:
             # agent.value() should not advance rnn state.
@@ -194,10 +212,13 @@ class CpuEvalCollector(BaseEvalCollector):
         obs_pyt, act_pyt, rew_pyt = torchify_buffer((observation, action, reward))
         self.agent.reset()
         self.agent.eval_mode(itr)
+        logger.log(f"------------collect_evaluation: {self.max_T}---------------")
         for t in range(self.max_T):
             act_pyt, agent_info = self.agent.step(obs_pyt, act_pyt, rew_pyt)
             action = numpify_buffer(act_pyt)
             for b, env in enumerate(self.envs):
+                env.evaluating = True
+                
                 o, r, d, env_info = env.step(action[b])
                 traj_infos[b].step(observation[b], action[b], r, d,
                     agent_info[b], env_info)
