@@ -193,12 +193,16 @@ def test_drawer():
 
 def test_single_task(name, num):
     # read data from files
-    file_action = open('/home/yxt/Research/RL/data/learning_to_be_taught/action_saved/'+name+'-'+str(num)+'.txt', 'r')
+    file_action = open('/home/yxt/Research/RL/data/learning_to_be_taught/action_saved/old/'+name+'-'+str(num)+'.txt', 'r')
     action = []
     hand_init_pos = [-0.03265, 0.51488, 0.23687]
-    move_left_right = np.array([[-1, 0, 0, 0],[1, 0 ,0, 0]])
-    move_back_front = np.array([[0, -1, 0, 0],[0, 1, 0, 0]])
-    move_up_down = np.array([[0, 0, 1, 0],[0, 0, -1, 0]])
+
+    move_up = [0, 0, 1, 0]
+    move_down = [0, 0, -1, 0]
+    move_back = [0, -1, 0, 0]
+    move_front = [0, 1, 0, 0]
+    move_left = [-1, 0, 0, 0]
+    move_right = [1, 0, 0, 0]
 
     for line in file_action.readlines():
         line = line.strip().split()
@@ -211,7 +215,7 @@ def test_single_task(name, num):
     print(action[0])
     print(raction[-1])
 
-    file_obs = open('/home/yxt/Research/RL/data/learning_to_be_taught/obs_saved/'+name+'-'+str(num)+'.txt', 'r')
+    file_obs = open('/home/yxt/Research/RL/data/learning_to_be_taught/obs_saved/old/'+name+'-'+str(num)+'.txt', 'r')
     obs = []
     for line in file_obs.readlines():
         line = line.strip().split()
@@ -253,22 +257,28 @@ def test_single_task(name, num):
     #     i = i+1
 
     reach_act = np.zeros([1,4])
-    move_up_down[0][-1] = action[-1][-1]
-    move_up_down[1][-1] = action[-1][-1]
-    move_back_front[0][-1] = action[-1][-1]
-    move_back_front[1][-1] = action[-1][-1]
-    move_left_right[0][-1] = action[-1][-1]
-    move_left_right[1][-1] = action[-1][-1]
+    move_up[3] = action[-1][-1]
+    move_down[3] = action[-1][-1]
+    move_back[3] = action[-1][-1]
+    move_front[3] = action[-1][-1]
+    move_left[3] = action[-1][-1]
+    move_right[3] = action[-1][-1]
+    print(action[-1][-1])
+    print(move_up)
+    print(move_front)
+    print(move_right)
     reach_act[0] = move_up
     curr_hand_pos = np.zeros([1,3])
-    switch = [0,0,0]
-
+    move_right_left = 0
+    lock = [0, 0]
     flag = False
+    print(f"count:{count}")
     while not done:
         if i < count:
             a = action[i]
         else:
             a = raction[i-count]
+            print("reverse")
         obs, reward, done, info = env.step(a)  # Step the environment with the sampled random action
         print(f'step {i}: action{a}, obs{obs}')
         if info['success']:
@@ -276,50 +286,107 @@ def test_single_task(name, num):
         env.render(mode='human')
         time.sleep(.02)
 
-
-
         i = i+1
+        if i == count/2:
+            while 1:
+                pass
         if i == count:
-            if obs[0] < hand_init_pos[0]:
-                switch[0] = 1
-            if obs[1] < hand_init_pos[1]:
-                switch[1] = 1
-            if obs[2] > hand_init_pos[2]:
-                switch[2] = 1
             env.reset_curr_path_length()
             cnt = 0
+
+            if name=="drawer-close-v1":
+                for ii in range(27):
+                    obs, reward, done, info = env.step(move_back)
+                    print("back")
+                    env.render(mode='human')
+                    time.sleep(.03)
             curr_hand_pos = obs[:3]
+            stop = False
+
+            # move the hand to the initial position
             while True:
-                if obs[2] < hand_init_pos[-1]:
-                    reach_act = np.append(reach_act, np.array(move_up_down[0]).reshape([1, 4]), axis=0)
-                    obs, reward, done, info = env.step(reach_act[-1])
-                elif obs[1] > hand_init_pos[1]:
-                    reach_act = np.append(reach_act, np.array(move_back_front[0]).reshape([1, 4]), axis=0)
-                    obs, reward, done, info = env.step(reach_act[-1])
-                elif switch[0]==1:
-                    reach_act = np.append(reach_act, np.array(move_left_right[1]).reshape([1, 4]), axis=0)
-                    obs, reward, done, info = env.step(reach_act[-1])
-                elif switch[0]==0:
-                    reach_act = np.append(reach_act, np.array(move_left_right[0]).reshape([1, 4]), axis=0)
-                    obs, reward, done, info = env.step(reach_act[-1])
-                else:
-                    rreach_act = np.negative(reach_act)
-                    rreach_act[:,-1] *= -1.0
-                    rcount = np.shape(rreach_act)[0]
-                    while rcount>1:
-                        obs, reward, done, info = env.step(rreach_act[rcount-1])
-                        rcount -= 1
-                        print("xxx")
-                        flag = True
-                        env.render(mode='human')
-                        time.sleep(.03)
+                if obs[2] < hand_init_pos[-1]and not lock[0]: #up
+                    # reach_act = np.append(reach_act, np.array(move_up).reshape([1, 4]), axis=0)
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_up)
+                    print(f"move up: {reach_act[-1]}")
+                elif obs[2] > hand_init_pos[-1]+0.03: # down
+                    # reach_act = np.append(reach_act, np.array(move_down).reshape([1, 4]), axis=0)
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_down)
+                elif obs[1] > hand_init_pos[1]+0.03 and not lock[1]:
+                    # reach_act = np.append(reach_act, np.array(move_back).reshape([1, 4]), axis=0)
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_back)
+                    print(f"move back: {reach_act[-1]}")
+                elif obs[0]<hand_init_pos[0] and not stop:
+                    # reach_act = np.append(reach_act, np.array(move_right).reshape([1, 4]), axis=0)
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_right)
+                    print("move right")
+                elif obs[0]>hand_init_pos[0] and not stop:
+                    # reach_act = np.append(reach_act, np.array(move_left).reshape([1, 4]), axis=0)
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_left)
+                    print("move left")
+
+                if obs[2] >= hand_init_pos[-1]:
+                    lock[0] = 1
+                if obs[1] <= hand_init_pos[1]:
+                    lock[1] = 1
+
                 if flag:
                     break
-                print(f"num:{cnt}, hand:{obs[:3]}, before:{curr_hand_pos}")
+
+                print(f"num:{cnt}, hand:{obs[:3]}, init:{hand_init_pos}, before:{curr_hand_pos}")
                 cnt += 1
                 env.render(mode='human')
                 time.sleep(.03)
 
+                dis = np.sqrt(np.sum((hand_init_pos - obs[:3]) ** 2))
+                print(dis)
+                if dis < 0.02:
+                    stop = True
+                    print("near distance1")
+                    break
+
+            # move the hand back to the target position
+            env.reset_curr_path_length()
+            cnt = 0
+            rl_lock = False
+            while True:
+                if obs[0] < curr_hand_pos[0] and not rl_lock:
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_right)
+                    print("move right")
+                elif obs[0] > curr_hand_pos[0] and not rl_lock:
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_left)
+                    print("move left")
+                elif obs[1] < curr_hand_pos[1]-0.03:
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_front)
+                    print("move front")
+                elif obs[2] > curr_hand_pos[2]:
+                    for t in range(2):
+                        obs, reward, done, info = env.step(move_down)
+                    print("move down")
+
+                if not rl_lock and abs(obs[0]-curr_hand_pos[0])<0.01:
+                    print(f"stop rl, dis:{abs(obs[0]-curr_hand_pos[0])}")
+                    rl_lock = True
+
+                print(f"** num:{cnt}, hand:{obs[:3]}, init:{hand_init_pos}, before:{curr_hand_pos}")
+                cnt += 1
+                env.render(mode='human')
+                time.sleep(.03)
+
+                dis = np.sqrt(np.sum((curr_hand_pos - obs[:3]) ** 2))
+                print(dis)
+                dis_2 = np.sqrt(np.sum((curr_hand_pos[:2] - obs[:2]) ** 2))
+                if dis < 0.03:
+                    print("near distance2")
+                    break
         if i-count >= np.shape(raction)[0]:
             break
     print("done.")
@@ -345,7 +412,7 @@ def test_single():
 if __name__ == '__main__':
     #sample_sawyer_reach_push_pick_place()
     # test_reach()
-    name = 'door-open-v1'
-    # name = 'drawer-close-v1'
-    num = 0
+    # name = 'door-open-v1'
+    name = 'drawer-close-v1'
+    num = 4
     test_single_task(name, num)
