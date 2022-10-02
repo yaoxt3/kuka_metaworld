@@ -61,8 +61,9 @@ Usage:
         <mesh name="finger_viz" file="sawyer/collision/finger.stl" scale='1.75 1.0 1.75'/>
         <mesh name="hand" file="sawyer/collision/hand.stl"/>
         <mesh name="hand_vis" file="sawyer/collision/hand_vis.stl"/>
-<!--        <mesh name="finger_vis" file="sawyer/collision/finger_vis_all2.stl" scale='0.0008 0.0008 0.0008'/>-->
         <mesh name="finger_vis" file="sawyer/collision/finger_vis.stl" scale='1.0 1.0 1.0'/>
+        <mesh name="finger_vis2" file="sawyer/collision/finger_vis_all2.stl" scale='0.0009 0.0009 0.0009'/>
+
 
 
 	    <mesh name="mug_mesh" file="objects/mug.stl"  scale="0.0006 0.0006 0.0006"/>
