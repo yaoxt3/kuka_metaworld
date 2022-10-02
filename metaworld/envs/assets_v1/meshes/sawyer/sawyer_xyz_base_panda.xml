@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Usage:
+
+<mujoco>
+	<compiler meshdir="../meshes/sawyer" ...></compiler>
+	<include file="shared_config.xml"></include>
+    (new stuff)
+	<worldbody>
+		<include file="sawyer_xyz_base.xml"></include>
+        (new stuff)
+	</worldbody>
+</mujoco>
+-->
+
+<mujoco model="sawyer">
+    <camera pos="0 0 3.2" name="topview" />
+
+    <geom name="tableTop" type="plane" pos="0 0.6 0" size="0.4 0.4 0.5"
+          rgba=".6 .6 .5 1" contype="1" conaffinity="1" friction="2 0.1 0.002" material="light_wood_v3"/>
+
+    <body name="base" pos="0 0 0">
+        <site name="basesite" pos="0 0 0" size="0.01" />
+        <inertial pos="0 0 0" mass="0" diaginertia="0 0 0" />
+        <body name="pedestal" pos="0 0 0">
+            <inertial pos="-0.15 0 -0.2" mass="46.64" diaginertia="1.71363 1.27988 0.809981" />
+            <geom size="0.4 0.2 0.2" pos="0 0 -0.2" type="box" rgba=".6 .6 .5 1" material="light_wood_v3"/>
+        </body>
+
+        <body name="robot0_link0" childclass="panda" pos="0 0 0" quat="0.707107 0 0 0.707107">
+<!--        <body name="robot0_link0" childclass="panda" pos="0 0 0">-->
+        <geom class="panda_viz" mesh="link0_viz" mass="2.91242"/>
+<!--        <geom class="panda_col" mesh="link0_col" mass="2.91242"/>-->
+        <body name="robot0_link1" pos="0 0 0.333">
+            <joint name="robot0_joint1" range="-2.8973 2.8973" class="panda_arm"/>
+            <geom class="panda_viz" mesh="link1_viz" mass="2.7063"/>
+<!--            <geom class="panda_col" mesh="link1_col" mass="2.7063"/>-->
+            <body name="robot0_link2" pos="0 0 0" quat="0.707107 -0.707107 0 0">
+                <joint name="robot0_joint2" limited="true" range="-1.7628 1.7628" class="panda_arm"/>
+                <geom class="panda_viz" mesh="link2_viz" mass="2.73046"/>
+<!--                <geom class="panda_col" mesh="link2_col" mass="2.73046"/>-->
+                <body name="robot0_link3" pos="0 -0.316 0" quat="0.707107 0.707107 0 0">
+                    <joint name="robot0_joint3" limited="true" range="-2.8973 2.8973" class="panda_arm"/>
+                    <geom class="panda_viz" mesh="link3_viz" mass="2.04104"/>
+                    <geom class="panda_grey_viz" mesh="link3_dark_viz" pos="0 .001 0"/>
+<!--                    <geom class="panda_col" mesh="link3_col" mass="2.04104"/>-->
+                    <body name="robot0_link4" pos="0.0825 0 0" quat="0.707107 0.707107 0 0">
+                        <joint name="robot0_joint4" limited="true" range="-3.0718 -0.0698" class="panda_arm"/>
+                        <geom class="panda_viz" mesh="link4_viz" mass="2.08129"/>
+                        <geom class="panda_grey_viz" mesh="link4_dark_viz"/>
+<!--                        <geom class="panda_col" mesh="link4_col" mass="2.08129"/>-->
+                        <body name="robot0_link5" pos="-0.0825 0.384 0" quat="0.707107 -0.707107 0 0">
+                            <joint name="robot0_joint5" limited="true" range="-2.8973 2.8973" class="panda_forearm"/>
+                            <geom class="panda_viz" mesh="link5_viz" mass="3.00049"/>
+                            <geom class="panda_grey_viz" mesh="link5_dark_viz"/>
+<!--                            <geom class="panda_col" mesh="link5_col" mass="3.00049"/>-->
+<!--                            <body name="robot0_link6" pos="0 0 0" euler='1.57 0 1.57'>-->
+<!--                                <joint name="robot0_joint6" limited="true" range="-1.6573 2.1127" class="panda_forearm"/>-->
+                            <body name="panda0_link6" pos="0 0 0" quat="0.707107 0.707107 0 0">
+<!--                                 <joint name="panda0_joint6" range="-0.0873 3.8223" class="panda_forearm"/>-->
+                                <joint name="panda0_joint6" limited="true" range="-1.6573 2.1127" class="panda_forearm"/>
+                                <geom class="panda_viz" mesh="link6_viz" mass="1.3235"/>
+                                <geom class="panda_grey_viz" mesh="link6_dark_viz"/>
+<!--                                <geom class="panda_col" mesh="link6_col" mass="1.3235"/>-->
+<!--                                <body name="robot0_link7" pos="0.088 0 0" euler='1.57 0 0.7854'>-->
+<!--                                    <joint name="robot0_joint7" limited="true" range="-2.8973 2.8973" class="panda_forearm"/>-->
+                                <body name="panda0_link7" pos="0.088 0 0" quat="0.707107 0.707107 0 0">
+<!--                                    <joint name="panda0_joint7" range="-2.9671 2.9671" class="panda_forearm"/>-->
+                                    <joint name="panda0_joint7" limited="true" range="-2.8973 2.8973" class="panda_forearm"/>
+<!--                                    <inertial pos="0 0 0" quat="0.924 0.383 0 0"/>-->
+                                    <geom class="panda_viz" mesh="link7_viz" quat="0.924 0 0 0.383" rgba=".8 .8 .82 1" mass="0.2"/>
+                                    <geom class="panda_grey_viz" mesh="link7_dark_viz" quat="0.924 0 0 0.383" pos="0 0 -.0008"/>
+<!--                                    <geom class="panda_col" mesh="link7_col" mass="0.2"/>-->
+<!--                                    <camera name="Franka_wrist_cam" pos=".050 -.050 0.15" euler="2.95 0.2 -.787"/>-->
+
+                                    <!-- End Effector -->
+                                    <body name="hand" pos="0.1065 0 0.105" quat="-0.707107 0 0.707107 0">
+                                        <site name="endEffector" pos="0 0 0" size="0.01" rgba='1 1 1 0' />
+                                        <geom pos="0 0 0.107" quat="0.707107 0 0.707107 0" class="panda_viz" mesh="hand_viz" mass="0.81909"/>
+<!--                                        <geom pos="0 0 0.107" quat="0.707107 0 0.707107 0" class="panda_col" mesh="hand_col" />-->
+<!--                                        <site name='end_effector' pos='0 0 .210' size='0.01' euler='0 0 -0.785398'/>-->
+<!--                                        <body name="eef" pos="0 0 0.21" quat="0.92388 0 0 -0.382683">-->
+<!--                                            <site name="grip_site" pos="0 0 0" size="0.005 0.005 0.005" rgba="1 0 0 0.5" type="sphere" group="1"/>-->
+<!--                                            <site name="ee_x" pos="0.1 0 0" size="0.005 .1"  quat="0.707105  0 0.707108 0 " rgba="1 0 0 0" type="cylinder" group="1"/>-->
+<!--                                            <site name="ee_y" pos="0 0.1 0" size="0.005 .1" quat="0.707105 0.707108 0 0" rgba="0 1 0 0" type="cylinder" group="1"/>-->
+<!--                                            <site name="ee_z" pos="0 0 0.1" size="0.005 .1" quat="1 0 0 0" rgba="0 0 1 0" type="cylinder" group="1"/>-->
+<!--                                            &lt;!&ndash; This site was added for visualization. &ndash;&gt;-->
+<!--&lt;!&ndash;                                            <site name="grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.3" type="cylinder" group="1"/>&ndash;&gt;-->
+<!--                                        </body>-->
+                                        <body name="leftclaw" pos="0.057 0 0.107" quat="0.707107 0 0.707107 0">
+                                            <inertial pos="0 0 0.05" mass="0.1" diaginertia="0.01 0.01 0.005" />
+<!--                                            <inertial pos="0 0 0.05" mass="1.6" diaginertia="0.01 0.01 0.005" />-->
+                                            <geom name="leftclaw_it" type="mesh" user="0" conaffinity="1" contype="0" solref="0.02 1" friction="1 0.005 0.0001" condim="4" mesh="finger_vis" mass="0.1"/>
+                                            <joint name="l_close" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 0.05" armature="100" damping="1000" frictionloss="1.0"/>
+<!--                                            <geom name="finger1_visual" type="mesh" contype="0" conaffinity="0" group="1" mesh="finger_vis" rgba="0.499 0.499 0.499 1" />-->
+                                            <site name="leftEndEffector" pos="0 0 0.05" size="0.005" rgba="1.0 0.0 0.0 1.0"/>
+                                            <body name="leftpad" pos="0 0.0085 0.056">
+                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />
+<!--                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.2" diaginertia="0.001 0.001 0.001" />-->
+                                                <geom name="leftpad_geom" size="0.008 0.004 0.008" pos="0 -0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>
+<!--                                                <geom size="0.018 0.004 0.038" pos="0 -0.008 0.015" quat="0 0 0 1" type="box" material="robot0:gripper_finger_mat" condim="4" friction="1 0.05 0.01" name="finger1_pad_collision"/>-->
+                                            </body>
+                                        </body>
+                                        <body name="rightclaw" pos="0.057 0 0.107" quat="0.707107 0 0.707107 0">
+                                            <inertial pos="0 0 0.05" mass="0.1" diaginertia="0.01 0.01 0.005" />
+<!--                                            <inertial pos="0 0 0.05" mass="1.6" diaginertia="0.01 0.01 0.005" />-->
+                                            <geom name="rightclaw_it" quat="0 0 0 1" type="mesh" user="0" conaffinity="1" contype="0" solref="0.02 1" friction="1 0.005 0.0001" condim="4" mesh="finger_vis" mass="0.1"/>
+                                            <joint name="r_close" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="-0.05 0" damping="1000" armature="100.0" frictionloss="1.0"/>
+<!--                                            <geom name="finger2_visual" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" mesh="finger_vis" rgba="0.499 0.499 0.499 1" />-->
+                                            <site name="rightEndEffector" pos="0 0 0.05" size="0.005" rgba="1.0 0.0 0.0 1.0"/>
+                                            <body name="rightpad" pos="0 -0.0085 0.056">
+                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />
+<!--                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.2" diaginertia="0.001 0.001 0.001" />-->
+                                                <geom name="rightpad_geom" size="0.008 0.004 0.008" pos="0 0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>
+<!--                                                <geom size="0.018 0.004 0.038" pos="0 0.008 0.015" quat="0 0 0 1" type="box" material="robot0:gripper_finger_mat" condim="4" friction="1 0.05 0.01" name="finger2_pad_collision"/>-->
+                                            </body>
+                                        </body>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+        </body>
+    </body>
+
+    <body mocap="true" name="mocap" pos="0 0 0">
+        <!--For debugging, set the alpha to 1-->
+        <!--<geom conaffinity="0" contype="0" pos="0 0 0" rgba="0.5 0.5 0.5 1" size="0.1 0.02 0.02" type="box"></geom>-->
+        <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0.0 0.5 0.5 0" size="0.01" type="sphere"></geom>
+        <site name="mocap" pos="0 0 0" rgba="0.0 0.5 0.5 0" size="0.01" type="sphere"></site>
+    </body>
+
+</mujoco>
