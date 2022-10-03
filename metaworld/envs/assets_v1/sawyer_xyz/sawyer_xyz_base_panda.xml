@@ -85,7 +85,7 @@ Usage:
 <!--                                            <site name="ee_y" pos="0 0.1 0" size="0.005 .1" quat="0.707105 0.707108 0 0" rgba="0 1 0 0" type="cylinder" group="1"/>-->
 <!--                                            <site name="ee_z" pos="0 0 0.1" size="0.005 .1" quat="1 0 0 0" rgba="0 0 1 0" type="cylinder" group="1"/>-->
 <!--                                            &lt;!&ndash; This site was added for visualization. &ndash;&gt;-->
-<!--&lt;!&ndash;                                            <site name="grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.3" type="cylinder" group="1"/>&ndash;&gt;-->
+<!--                                            <site name="grip_site_cylinder" pos="0 0 0" size="0.005 10" rgba="0 1 0 0.3" type="cylinder" group="1"/>&ndash;&gt;-->
 <!--                                        </body>-->
 <!--                                        <body name="leftclaw" pos="0.057 0 0.107" quat="0.707107 0 0.707107 0">-->
                                         <body name="leftclaw" pos="0.057 0 0.107" quat="0.707107 0 0.707107 0">
@@ -95,12 +95,15 @@ Usage:
                                             <geom name="leftclaw_it" pos="-0.022 0.03 -0.022" quat="0.707 0 0 -0.707" type="mesh" user="0" conaffinity="1" contype="0" solref="0.02 1" friction="1 0.005 0.0001" condim="4" mesh="finger_vis2" mass="0.1"/>
                                             <joint name="l_close" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 0.05" armature="100" damping="1000" frictionloss="1.0"/>
 <!--                                            <geom name="finger1_visual" type="mesh" contype="0" conaffinity="0" group="1" mesh="finger_vis" rgba="0.499 0.499 0.499 1" />-->
-                                            <site name="leftEndEffector" pos="0 0 0.05" size="0.005" rgba="1.0 0.0 0.0 1.0"/>
-                                            <body name="leftpad" pos="0 0.0085 0.056">
+<!--                                            <site name="leftEndEffector" pos="0 0 0.05" size="0.005" rgba="1.0 0.0 0.0 1.0"/>-->
+                                            <site name="leftEndEffector" pos="0 0 0.138" size="0.005" rgba="1.0 0.0 0.0 1.0"/>
+<!--                                            <body name="leftpad" pos="0 0.0085 0.056">-->
+<!--                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />-->
+<!--                                                <geom name="leftpad_geom" size="0.008 0.004 0.008" pos="0 -0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>-->
+<!--                                            </body>-->
+                                            <body name="leftpad" pos="0 0.0055 0.146">
                                                 <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />
-<!--                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.2" diaginertia="0.001 0.001 0.001" />-->
-                                                <geom name="leftpad_geom" size="0.008 0.004 0.008" pos="0 -0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>
-<!--                                                <geom size="0.018 0.004 0.038" pos="0 -0.008 0.015" quat="0 0 0 1" type="box" material="robot0:gripper_finger_mat" condim="4" friction="1 0.05 0.01" name="finger1_pad_collision"/>-->
+                                                <geom name="leftpad_geom" size="0.008 0.003 0.01" pos="0 -0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>
                                             </body>
                                         </body>
                                         <body name="rightclaw" pos="0.057 0 0.107" quat="0.707107 0 0.707107 0">
@@ -110,12 +113,15 @@ Usage:
                                             <geom name="rightclaw_it" pos="0.022 -0.03 -0.022" quat="0.707 0 0 0.707" type="mesh" user="0" conaffinity="1" contype="0" solref="0.02 1" friction="1 0.005 0.0001" condim="4" mesh="finger_vis2" mass="0.1"/>
                                             <joint name="r_close" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="-0.05 0" damping="1000" armature="100.0" frictionloss="1.0"/>
 <!--                                            <geom name="finger2_visual" quat="0 0 0 1" type="mesh" contype="0" conaffinity="0" group="1" mesh="finger_vis" rgba="0.499 0.499 0.499 1" />-->
-                                            <site name="rightEndEffector" pos="0 0 0.05" size="0.005" rgba="1.0 0.0 0.0 1.0"/>
-                                            <body name="rightpad" pos="0 -0.0085 0.056">
+<!--                                            <site name="rightEndEffector" pos="0 0 0.05" size="0.005" rgba="1.0 0.0 0.0 1.0"/>-->
+                                            <site name="rightEndEffector" pos="0 0 0.138" size="0.005" rgba="1.0 0.0 0.0 1.0"/>
+<!--                                            <body name="rightpad" pos="0 -0.0085 0.056">-->
+<!--                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />-->
+<!--                                                <geom name="rightpad_geom" size="0.008 0.004 0.008" pos="0 0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>-->
+<!--                                            </body>-->
+                                            <body name="rightpad" pos="0 -0.0055 0.146">
                                                 <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />
-<!--                                                <inertial pos="0 0 0" quat="0 0 0 1" mass="0.2" diaginertia="0.001 0.001 0.001" />-->
-                                                <geom name="rightpad_geom" size="0.008 0.004 0.008" pos="0 0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>
-<!--                                                <geom size="0.018 0.004 0.038" pos="0 0.008 0.015" quat="0 0 0 1" type="box" material="robot0:gripper_finger_mat" condim="4" friction="1 0.05 0.01" name="finger2_pad_collision"/>-->
+                                                <geom name="rightpad_geom" size="0.008 0.003 0.01" pos="0 0.005 -0.015" type="box" user="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1"/>
                                             </body>
                                         </body>
                                     </body>
