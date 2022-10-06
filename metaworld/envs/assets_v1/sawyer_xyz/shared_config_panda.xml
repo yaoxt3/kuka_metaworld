@@ -21,7 +21,7 @@ Usage:
       </worldbody>
 
     <asset>
-        <mesh name="pedestal" file="sawyer/pedestal.stl" />
+<!--        <mesh name="pedestal" file="sawyer/pedestal.stl" />-->
         <mesh name="base" file="sawyer/base.stl" />
         <mesh name="l0" file="sawyer/l0.stl" />
         <mesh name="head" file="sawyer/head.stl" />
@@ -42,6 +42,10 @@ Usage:
         <mesh name="link6_col" file="sawyer/collision/link6.stl"/>
         <mesh name="link7_col" file="sawyer/collision/link7.stl"/>
         <mesh name="hand_col" file="sawyer/collision/hand.stl"/>
+        <mesh name="pedestal" file="sawyer/collision/pedestal.stl"/>
+        <mesh name="finger_col" file="sawyer/collision/finger.stl" scale='1.75 1.0 1.75'/>
+
+
         <mesh name="link0_viz" file="sawyer/visual/link0.stl"/>
         <mesh name="link1_viz" file="sawyer/visual/link1.stl"/>
         <mesh name="link2_viz" file="sawyer/visual/link2.stl"/>
@@ -57,14 +61,12 @@ Usage:
         <mesh name="link7_dark_viz" file="sawyer/visual/link7_dark.stl" scale="1.01 1.01 1.01"/>
         <mesh name="hand_viz" file="sawyer/visual/hand.stl"/>
 
-        <mesh name="finger_col" file="sawyer/collision/finger.stl" scale='1.75 1.0 1.75'/>
+
         <mesh name="finger_viz" file="sawyer/collision/finger.stl" scale='1.75 1.0 1.75'/>
         <mesh name="hand" file="sawyer/collision/hand.stl"/>
         <mesh name="hand_vis" file="sawyer/collision/hand_vis.stl"/>
         <mesh name="finger_vis" file="sawyer/collision/finger_vis.stl" scale='1.0 1.0 1.0'/>
         <mesh name="finger_vis2" file="sawyer/collision/finger_vis_all2.stl" scale='0.0009 0.0009 0.0009'/>
-
-
 
 	    <mesh name="mug_mesh" file="objects/mug.stl"  scale="0.0006 0.0006 0.0006"/>
         <texture type="skybox" builtin="gradient" rgb1=".50 .495 .48" rgb2=".50 .495 .48" width="32" height="32" />
@@ -191,10 +193,10 @@ Usage:
             </default>
 
             <default class="panda_col">
-                <geom contype="1" conaffinity="1" group="3" type="mesh" rgba=".5 .6 .7 1"/>
+                <geom contype="1" conaffinity="1" group="3" type="mesh" rgba=".5 .6 .7 1" friction=".6 0.005 0.0001"/>
             </default>
             <default class="panda_arm">
-                <joint damping="100"/>
+                <joint damping="10"/>
             </default>
             <default class="panda_forearm">
                 <joint damping="10"/>
@@ -218,5 +220,22 @@ Usage:
 <!--    <contact>-->
 <!--        <exclude body1="rightclaw" body2="leftclaw"></exclude>-->
 <!--    </contact>-->
+<!--     <actuator>-->
+<!--        &lt;!&ndash; Physical limits of the actuator. &ndash;&gt;-->
+<!--        &lt;!&ndash; <motor ctrllimited="true" ctrlrange="-80.0 80.0" joint="joint1" name="torq_right_j0"/>-->
+<!--        <motor ctrllimited="true" ctrlrange="-80.0 80.0" joint="joint2" name="torq_right_j1"/>-->
+<!--        <motor ctrllimited="true" ctrlrange="-80.0 80.0" joint="joint3" name="torq_right_j2"/>-->
+<!--        <motor ctrllimited="true" ctrlrange="-80.0 80.0" joint="joint4" name="torq_right_j3"/>-->
+<!--        <motor ctrllimited="true" ctrlrange="-80.0 80.0" joint="joint5" name="torq_right_j4"/>-->
+<!--        <motor ctrllimited="true" ctrlrange="-12.0 12.0" joint="joint6" name="torq_right_j5"/>-->
+<!--        <motor ctrllimited="true" ctrlrange="-12.0 12.0" joint="joint7" name="torq_right_j6"/> &ndash;&gt;-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.1750 2.1750" joint="joint1" kv="8.0" name="vel_right_j1"/>-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.1750 2.1750" joint="joint2" kv="7.0" name="vel_right_j2"/>-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.1750 2.1750" joint="joint3" kv="6.0" name="vel_right_j3"/>-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.1750 2.1750" joint="joint4" kv="4.0" name="vel_right_j4"/>-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.6100 2.6100" joint="joint5" kv="2.0" name="vel_right_j5"/>-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.6100 2.6100" joint="joint6" kv="0.5" name="vel_right_j6"/>-->
+<!--        <velocity ctrllimited="true" ctrlrange="-2.6100 2.6100" joint="joint7" kv="0.1" name="vel_right_j7"/>-->
+<!--    </actuator>-->
 
 </mujoco>
